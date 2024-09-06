@@ -1,0 +1,9 @@
+opencv-python-headless
+pandas
+ultralytics
+numpy
+easyocr
+pillow
+psycopg2
+flask
+
