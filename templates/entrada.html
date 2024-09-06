@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todas as Entradas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50; /* Azul escuro para o título */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db; /* Azul claro para os cabeçalhos */
+            color: #fff;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+
+        tbody tr:hover {
+            background-color: #eaf2f8; /* Azul muito claro para destaque em hover */
+        }
+
+        a {
+            color: #3498db; /* Azul claro para os links */
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Todas as Entradas</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Placa</th>
+                <th>Data</th>
+                <th>Hora</th>
+                <th>Imagem</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Aqui você precisa inserir os dados de todas as entradas -->
+            {% for record in records %}
+                <tr>
+                    <td>{{ record[0] }}</td>
+                    <td>{{ record[1] }}</td>
+                    <td>{{ record[2] }}</td>
+                    <td><a href="{{ url_for('image', record_id=record[0]) }}" target="_blank">Ver Imagem</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="/" class="button">Voltar</a>
+</body>
+</html>
