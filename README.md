@@ -119,3 +119,12 @@ Visualize imagens associadas a registros de entrada clicando nos links apropriad
 ## Placas
 ![Captura de tela de 2024-09-06 11-17-10](https://github.com/user-attachments/assets/de1213c6-d06e-45c8-b9a0-ad4c4dfbc95d)
 
+### Observação:
+Para o correto funcionamento da interface.py, é essencial que o arquivo best.pt esteja presente na pasta modelo. Devido ao tamanho do arquivo, não foi possível realizar o upload para o GitHub. Se precisar do modelo de aprendizado de máquina para reconhecimento de placas de veículos, por favor, entre em contato pelo e-mail jj9075713@gmail.com.
+
+### Requisitos de Hadware :
+ Este sistema realiza a análise de apenas uma câmera RTSP e permite a adição de mais três câmeras para visualização. O hardware mínimo necessário para o funcionamento deste software é um processador com 8 núcleos e 4 threads. Caso tenha interesse em realizar a análise de quatro câmeras simultaneamente, é imprescindível ter uma GPU, caso contrário, o sistema não funcionará adequadamente.
+
+### Dica:
+Para adicionar os links das câmeras, localize a linha self.rtsp_links = [ na classe CameraApp e insira os links desejados. Lembre-se de que o primeiro link é destinado à análise de entrada e saída de veículos. Veja o código abaixo:
+![Captura de tela de 2024-09-06 11-35-13](https://github.com/user-attachments/assets/2050e496-ee5e-468a-8e09-f9eebf08b5d0)
