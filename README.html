@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoramento de Câmeras com Análise de Placas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        h1 {
+            background: #333;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        code {
+            background: #eee;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        pre {
+            background: #eee;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            margin-bottom: 10px;
+        }
+        .note {
+            background: #ffeb3b;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Monitoramento de Câmeras com Análise de Placas</h1>
+    </header>
+    <div class="container">
+        <section>
+            <h2>Descrição do Projeto</h2>
+            <p>Este projeto é uma aplicação de monitoramento de câmeras que utiliza o YOLOv8 para detectar objetos e o EasyOCR para reconhecer placas de veículos. Ele também faz a integração com um banco de dados PostgreSQL para registrar entradas e saídas de veículos com base na leitura das placas.</p>
+        </section>
+
+        <section>
+            <h2>Requisitos</h2>
+            <ul>
+                <li>Python 3.8 ou superior</li>
+                <li>OpenCV</li>
+                <li>pandas</li>
+                <li>ultralytics (YOLOv8)</li>
+                <li>numpy</li>
+                <li>easyocr</li>
+                <li>Pillow (PIL)</li>
+                <li>psycopg2</li>
+                <li>tkinter (já incluído no Python padrão)</li>
+                <li>PostgreSQL</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Instalação</h2>
+            <ol>
+                <li>Clone o repositório:</li>
+                <pre><code>git clone https://github.com/seuusuario/seurepositorio.git
+cd seurepositorio</code></pre>
+
+                <li>Crie um ambiente virtual e ative-o:</li>
+                <pre><code>python -m venv venv
+source venv/bin/activate  # Para Windows, use `venv\Scripts\activate`</code></pre>
+
+                <li>Instale as dependências:</li>
+                <pre><code>pip install opencv-python pandas ultralytics numpy easyocr Pillow psycopg2</code></pre>
+
+                <li>Configure o PostgreSQL:</li>
+                <ul>
+                    <li>Certifique-se de que o PostgreSQL está instalado e em execução.</li>
+                    <li>Crie um banco de dados chamado <code>controle</code>.</li>
+                    <li>Ajuste o nome do banco de dados, usuário e senha no script, se necessário.</li>
+                </ul>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Uso</h2>
+            <ol>
+                <li>Prepare o Modelo e Arquivos de Configuração:</li>
+                <ul>
+                    <li>Coloque o modelo YOLOv8 pré-treinado em <code>modelo/best.pt</code>.</li>
+                    <li>Crie um arquivo de texto <code>coco1.txt</code> com a lista de classes que o modelo pode detectar.</li>
+                </ul>
+
+                <li>Crie as Tabelas no Banco de Dados:</li>
+                <ul>
+                    <li>O script <code>camera_app.py</code> criará automaticamente as tabelas necessárias quando for executado.</li>
+                </ul>
+
+                <li>Execute o Aplicativo:</li>
+                <ul>
+                    <li>Certifique-se de que o arquivo de vídeo <code>resources/mycarplate.mp4</code> esteja no diretório correto.</li>
+                    <li>Execute o script principal:</li>
+                    <pre><code>python camera_app.py</code></pre>
+                    <li>O aplicativo abrirá uma janela com o monitoramento das câmeras.</li>
+                </ul>
+
+                <li>Interação com o Relatório:</li>
+                <ul>
+                    <li>Para abrir a janela de relatórios, certifique-se de que o módulo <code>relatorio</code> está disponível e que a função <code>open_report_window()</code> está implementada no arquivo <code>relatorio.py</code>.</li>
+                </ul>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Estrutura do Projeto</h2>
+            <pre><code>project/
+│
+├── camera_app.py      # Script principal da aplicação
+├── modelo/
+│   └── best.pt        # Modelo pré-treinado YOLOv8
+├── resources/
+│   └── mycarplate.mp4 # Vídeo para teste
+├── coco1.txt          # Lista de classes para YOLO
+└── relatorio.py       # Módulo para geração de relatórios (opcional)</code></pre>
+        </section>
+
+        <section>
+            <h2>Funções Principais</h2>
+            <ul>
+                <li><strong>Leitura e Processamento de Vídeo:</strong> Captura vídeo de fontes especificadas e processa cada frame.</li>
+                <li><strong>Detecção de Objetos:</strong> Usa YOLOv8 para detectar objetos nas imagens.</li>
+                <li><strong>Reconhecimento de Placas:</strong> Usa EasyOCR para ler placas de veículos.</li>
+                <li><strong>Registro em Banco de Dados:</strong> Insere e atualiza registros de entrada e saída no banco de dados PostgreSQL.</li>
+                <li><strong>Interface Gráfica:</strong> Interface com o usuário utilizando tkinter.</li>
+            </ul>
+        </section>
+    </div>
+</body>
+</html>
