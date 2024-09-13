@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash ,abort
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime
 import io
+import os
+import signal
+
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -12,15 +15,81 @@ def connect_db():
         dbname="controle", user="postgres", password="1234", host="localhost"
     )
 
-def fetch_records(table, start_date=None, end_date=None):
+def fetch_records(table, start_date=None, end_date=None, offset=0, limit=20):
     conn = connect_db()
     cursor = conn.cursor()
     if start_date and end_date:
-        query = sql.SQL("SELECT placa, data, hora, img FROM {} WHERE data BETWEEN %s AND %s ORDER BY data, hora").format(sql.Identifier(table))
+        query = sql.SQL("""
+            SELECT DISTINCT ON (placa) placa, data, hora, img 
+            FROM {} 
+            WHERE data BETWEEN %s AND %s 
+            ORDER BY placa, data DESC, hora DESC 
+            LIMIT %s OFFSET %s
+        """).format(sql.Identifier(table))
+        cursor.execute(query, (start_date, end_date, limit, offset))
+    else:
+        query = sql.SQL("""
+            SELECT DISTINCT ON (placa) placa, data, hora, img 
+            FROM {} 
+            ORDER BY placa, data DESC, hora DESC 
+            LIMIT %s OFFSET %s
+        """).format(sql.Identifier(table))
+        cursor.execute(query, (limit, offset))
+    records = cursor.fetchall()
+    conn.close()
+    return records
+
+def count_records(table, start_date=None, end_date=None):
+    conn = connect_db()
+    cursor = conn.cursor()
+    if start_date and end_date:
+        query = sql.SQL("SELECT COUNT(DISTINCT placa) FROM {} WHERE data BETWEEN %s AND %s").format(sql.Identifier(table))
         cursor.execute(query, (start_date, end_date))
     else:
-        query = sql.SQL("SELECT placa, data, hora, img FROM {} ORDER BY data, hora").format(sql.Identifier(table))
+        query = sql.SQL("SELECT COUNT(DISTINCT placa) FROM {}").format(sql.Identifier(table))
         cursor.execute(query)
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count
+
+def fetch_historico_entrada(placa=None, start_date=None, end_date=None, offset=0, limit=20):
+    conn = connect_db()
+    cursor = conn.cursor()
+    if placa and start_date and end_date:
+        query = sql.SQL("""
+            SELECT DISTINCT ON (placa) placa, data, hora 
+            FROM historico_entrada 
+            WHERE placa = %s AND data BETWEEN %s AND %s 
+            ORDER BY placa, data DESC, hora DESC 
+            LIMIT %s OFFSET %s
+        """)
+        cursor.execute(query, (placa, start_date, end_date, limit, offset))
+    elif placa:
+        query = sql.SQL("""
+            SELECT DISTINCT ON (placa) placa, data, hora 
+            FROM historico_entrada 
+            WHERE placa = %s 
+            ORDER BY placa, data DESC, hora DESC 
+            LIMIT %s OFFSET %s
+        """)
+        cursor.execute(query, (placa, limit, offset))
+    elif start_date and end_date:
+        query = sql.SQL("""
+            SELECT DISTINCT ON (placa) placa, data, hora 
+            FROM historico_entrada 
+            WHERE data BETWEEN %s AND %s 
+            ORDER BY placa, data DESC, hora DESC 
+            LIMIT %s OFFSET %s
+        """)
+        cursor.execute(query, (start_date, end_date, limit, offset))
+    else:
+        query = sql.SQL("""
+            SELECT DISTINCT ON (placa) placa, data, hora 
+            FROM historico_entrada 
+            ORDER BY placa, data DESC, hora DESC 
+            LIMIT %s OFFSET %s
+        """)
+        cursor.execute(query, (limit, offset))
     records = cursor.fetchall()
     conn.close()
     return records
@@ -59,14 +128,10 @@ def add_record(table, placa, data, hora):
     conn = connect_db()
     cursor = conn.cursor()
     try:
-        # Adiciona registro na tabela de entrada
         query = sql.SQL("INSERT INTO {} (placa, data, hora) VALUES (%s, %s, %s)").format(sql.Identifier(table))
         cursor.execute(query, (placa, data, hora))
-
-        # Adiciona o mesmo registro na tabela de registro_placas
         query = sql.SQL("INSERT INTO registro_placas (placa) VALUES (%s)")
         cursor.execute(query, (placa,))
-
         conn.commit()
         return True
     except Exception as e:
@@ -79,31 +144,17 @@ def add_record(table, placa, data, hora):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        if 'filter' in request.form:
-            start_date = request.form.get('start_date')
-            end_date = request.form.get('end_date')
-            table = request.form.get('table')
-            if start_date and end_date:
-                try:
-                    datetime.strptime(start_date, "%Y-%m-%d")
-                    datetime.strptime(end_date, "%Y-%m-%d")
-                except ValueError:
-                    flash("Formato de data inválido. Use YYYY-MM-DD.")
-                    return redirect(url_for('index'))
-
-                records = fetch_records(table, start_date, end_date)
-                return render_template('index.html', records=records, table=table, show_section='filter')
-            else:
-                flash("Por favor, preencha as datas inicial e final.")
-                return redirect(url_for('index'))
-
-        elif 'show_all_entries' in request.form:
+        if 'show_all_entries' in request.form:
             records = fetch_records("entrada")
             return render_template('index.html', records=records, table="entrada", show_section='entries')
 
         elif 'show_all_exits' in request.form:
             records = fetch_records("saida")
             return render_template('index.html', records=records, table="saida", show_section='entries')
+
+        elif 'show_historico' in request.form:
+            records = fetch_historico_entrada()
+            return render_template('index.html', records=records, table="historico_entrada", show_section='historico')
 
         elif 'edit_record' in request.form:
             table = request.form.get('table')
@@ -126,11 +177,11 @@ def index():
 
     return render_template('index.html', records=None, table=None, show_section=None)
 
-@app.route('/image/<record_id>')
-def image(record_id):
+@app.route('/image/<table>/<record_id>')
+def image(table, record_id):
     conn = connect_db()
     cursor = conn.cursor()
-    query = sql.SQL("SELECT img FROM entrada WHERE placa = %s").format(sql.Identifier('entrada'))
+    query = sql.SQL("SELECT img FROM {} WHERE placa = %s").format(sql.Identifier(table))
     cursor.execute(query, (record_id,))
     img = cursor.fetchone()
     conn.close()
@@ -188,13 +239,47 @@ def admin_delete():
 
 @app.route('/entries')
 def show_entries():
-    records = fetch_records("entrada")
-    return render_template('entrada.html', records=records)
+    page = int(request.args.get('page', 1))
+    per_page = 20
+    offset = (page - 1) * per_page
+    records = fetch_records("entrada", offset=offset, limit=per_page)
+    total_records = count_records("entrada")
+    total_pages = (total_records + per_page - 1) // per_page
+    return render_template('entrada.html', records=records, page=page, total_pages=total_pages)
 
 @app.route('/exits')
 def show_exits():
-    records = fetch_records("saida")
-    return render_template('saida.html', records=records)
+    page = int(request.args.get('page', 1))
+    per_page = 20
+    offset = (page - 1) * per_page
+    records = fetch_records("saida", offset=offset, limit=per_page)
+    total_records = count_records("saida")
+    total_pages = (total_records + per_page - 1) // per_page
+    return render_template('saida.html', records=records, page=page, total_pages=total_pages)
+
+@app.route('/historico_entrada', methods=['GET', 'POST'])
+def show_historico_entrada():
+    placa = request.form.get('placa', None)
+    start_date = request.form.get('start_date', None)
+    end_date = request.form.get('end_date', None)
+    page = int(request.args.get('page', 1))
+    per_page = 20
+    offset = (page - 1) * per_page
+    records = fetch_historico_entrada(placa, start_date, end_date, offset=offset, limit=per_page)
+    total_records = count_records("historico_entrada", start_date, end_date)
+    total_pages = (total_records + per_page - 1) // per_page
+    return render_template('historico_entrada.html', records=records, page=page, total_pages=total_pages, placa=placa, start_date=start_date, end_date=end_date)
+
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    if 'werkzeug.server.shutdown' in request.environ:
+        func = request.environ['werkzeug.server.shutdown']
+        func()
+        return 'Servidor desligado!', 200
+    else:
+        # Se `werkzeug.server.shutdown` não está disponível, simule a parada do processo
+        os.kill(os.getpid(), signal.SIGINT)
+        return 'Servidor desligado!', 200
 
 if __name__ == "__main__":
     app.run(debug=True)
