@@ -9,23 +9,20 @@ from tkinter import Frame
 from PIL import Image, ImageTk
 import threading
 import psycopg2
-import time
 
 # Inicializa o leitor EasyOCR
 reader = easyocr.Reader(['en'])
 
 # Carrega o modelo YOLOv8 pré-treinado
-model = YOLO('modelo/best.pt')
+model = YOLO('/home/jose/ocrb/modelo/best.pt')
 
 # Lista de classes para YOLO
-with open("coco1.txt", "r") as my_file:
+with open("/home/jose/ocrb/coco1.txt", "r") as my_file:
     class_list = my_file.read().split("\n")
 
 # Área de análise original
 original_width, original_height = 1020, 510
 analysis_ratio = 0.30
-analysis_width = int(original_width * analysis_ratio)
-analysis_height = int(original_height * analysis_ratio)
 
 # Conectar ao banco de dados PostgreSQL
 conn = psycopg2.connect(
@@ -51,6 +48,12 @@ def create_tables():
         placa VARCHAR(20) PRIMARY KEY,
         ultimo_registro TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS historico_entrada (
+        placa VARCHAR(20),
+        data DATE,
+        hora TIME,
+        img BYTEA
+    );
     """)
     conn.commit()
 
@@ -59,6 +62,13 @@ def insert_entrada(placa, data, hora, img):
     INSERT INTO entrada (placa, data, hora, img)
     VALUES (%s, %s, %s, %s);
     """, (placa, data, hora, psycopg2.Binary(img)))
+    
+    # Adiciona o mesmo registro à tabela historico_entrada
+    cursor.execute("""
+    INSERT INTO historico_entrada (placa, data, hora, img)
+    VALUES (%s, %s, %s, %s);
+    """, (placa, data, hora, psycopg2.Binary(img)))
+    
     conn.commit()
 
 def insert_saida(placa, data, hora, img):
@@ -70,10 +80,22 @@ def insert_saida(placa, data, hora, img):
 
 def delete_entrada(placa):
     cursor.execute("""
-    DELETE FROM entrada
-    WHERE placa = %s;
+    SELECT * FROM entrada WHERE placa = %s;
     """, (placa,))
-    conn.commit()
+    record = cursor.fetchone()
+    if record:
+        # Move o registro para a tabela de saída
+        cursor.execute("""
+        INSERT INTO saida (placa, data, hora, img)
+        VALUES (%s, %s, %s, %s);
+        """, (record[0], record[1], record[2], record[3]))
+        
+        # Remove o registro da tabela de entrada
+        cursor.execute("""
+        DELETE FROM entrada
+        WHERE placa = %s;
+        """, (placa,))
+        conn.commit()
 
 def delete_saida(placa):
     cursor.execute("""
@@ -93,7 +115,7 @@ def update_plate_registration(placa):
     conn.commit()
 
 def resize_analysis_area(original_width, original_height, target_width, target_height):
-    x_min_area, y_min_area, x_max_area, y_max_area = 30, 400, 1015, 451
+    x_min_area, y_min_area, x_max_area, y_max_area = 30, 390, 1015, 451
     width_scale = target_width / original_width
     height_scale = target_height / original_height
     x_min_area = int(x_min_area * width_scale)
@@ -113,12 +135,15 @@ class CameraApp:
         self.root.geometry("1200x800")
         
         self.rtsp_links = [
-            'resources/mycarplate.mp4',
+            '/home/jose/ocrb/resources/mycarplate.mp4',
         ]
         
         self.frames = [None] * len(self.rtsp_links)
         self.canvas = [None] * len(self.rtsp_links)
         self.video_sources = [None] * len(self.rtsp_links)
+        
+        self.frame_counters = [0] * len(self.rtsp_links)  # Contador de frames
+        self.frame_buffer = [None] * len(self.rtsp_links)  # Buffer para frames
         
         self.create_widgets()
         self.start_video_stream()
@@ -184,8 +209,26 @@ class CameraApp:
             ret, frame = self.video_sources[index].read()
             if not ret:
                 break
-            if index == 0:  # Analisar apenas o feed da primeira câmera
-                frame = self.analyze_frame(frame)
+            
+            # Armazenar o frame no buffer
+            self.frame_buffer[index] = frame
+            
+            # Desenhar a área de análise no frame original
+            height, width = frame.shape[:2]
+            x_min_area, y_min_area, x_max_area, y_max_area = resize_analysis_area(original_width, original_height, width, height)
+            cv2.rectangle(frame, (x_min_area, y_min_area), (x_max_area, y_max_area), (255, 0, 0), 2)
+            
+            # Incrementar o contador de frames
+            self.frame_counters[index] += 1
+            
+            # Processar o frame apenas se o contador for um múltiplo de 4
+            if self.frame_counters[index] % 4 == 0:
+                # Pegar o último frame do buffer para análise
+                frame_to_analyze = self.frame_buffer[index]
+                if frame_to_analyze is not None:
+                    frame_to_analyze = self.analyze_frame(frame_to_analyze)
+            
+            # Redimensionar e exibir o frame
             height, width = frame.shape[:2]
             aspect_ratio = width / height
             new_height = 360
@@ -199,9 +242,11 @@ class CameraApp:
             frame = cv2.cvtColor(padding_frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(frame)
             photo = ImageTk.PhotoImage(image=image)
+            
             def update_canvas():
                 self.canvas[index].create_image(0, 0, image=photo, anchor=tk.NW)
                 self.canvas[index].image = photo
+            
             self.root.after(0, update_canvas)
             cv2.waitKey(1)
 
