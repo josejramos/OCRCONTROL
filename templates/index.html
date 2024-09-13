@@ -15,11 +15,6 @@
             text-align: center;
             color: #2c3e50;
         }
-        h2 {
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            color: #3498db;
-        }
         form {
             background: #ffffff;
             border-radius: 8px;
@@ -55,41 +50,6 @@
             color: #e74c3c;
             margin-bottom: 20px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            background: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #3498db;
-            color: #fff;
-        }
-        tbody tr:nth-child(odd) {
-            background-color: #f2f2f2;
-        }
-        tbody tr:hover {
-            background-color: #eaf2f8;
-        }
-        .admin-button {
-            background-color: #e67e22;
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .admin-button:hover {
-            background-color: #d35400;
-        }
         .button {
             display: inline-block;
             background-color: #3498db;
@@ -108,25 +68,11 @@
 <body>
     <h1>Controle de Acesso</h1>
 
-    <!-- Formulário de filtro -->
-    <form method="POST" action="/">
-        <h2>Filtrar Registros</h2>
-        <label for="table">Tabela:</label>
-        <select name="table" id="table" required>
-            <option value="entrada">Entrada</option>
-            <option value="saida">Saída</option>
-        </select>
-        <label for="start_date">Data Inicial:</label>
-        <input type="date" name="start_date" id="start_date" required>
-        <label for="end_date">Data Final:</label>
-        <input type="date" name="end_date" id="end_date" required>
-        <input type="submit" name="filter" value="Filtrar">
-    </form>
-
-    <!-- Botões para mostrar todas as entradas e saídas -->
+    <!-- Botões para mostrar todas as entradas, saídas e histórico de entrada -->
     <div>
         <a href="{{ url_for('show_entries') }}" class="button">Mostrar Todas as Entradas</a>
         <a href="{{ url_for('show_exits') }}" class="button">Mostrar Todas as Saídas</a>
+        <a href="{{ url_for('show_historico_entrada') }}" class="button">Mostrar Histórico de Entrada</a>
     </div>
 
     <!-- Formulário para acessar administração -->
@@ -135,6 +81,11 @@
         <label for="admin_password">Senha:</label>
         <input type="password" name="password" id="admin_password" required>
         <input type="submit" value="Acessar Administração" class="admin-button">
+    </form>
+
+    <!-- Formulário para desligar o servidor -->
+    <form method="POST" action="/shutdown">
+        <input type="submit" value="Desligar Servidor" class="button">
     </form>
 
     <!-- Mensagens de erro/sucesso -->
@@ -147,32 +98,5 @@
             </ul>
         {% endif %}
     {% endwith %}
-
-    <!-- Tabela de registros -->
-    {% if records %}
-        <h2>Registros de {{ table }}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Placa</th>
-                    <th>Data</th>
-                    <th>Hora</th>
-                    <th>Imagem</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in records %}
-                    <tr>
-                        <td>{{ record[0] }}</td>
-                        <td>{{ record[1] }}</td>
-                        <td>{{ record[2] }}</td>
-                        <td>
-                            <a href="{{ url_for('image', record_id=record[0]) }}" target="_blank">Ver Imagem</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
 </body>
 </html>
