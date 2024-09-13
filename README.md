@@ -128,3 +128,81 @@ Para o correto funcionamento da interface.py, é essencial que o arquivo best.pt
 ### Dica:
 Para adicionar os links das câmeras, localize a linha self.rtsp_links = [ na classe CameraApp e insira os links desejados. Lembre-se de que o primeiro link é destinado à análise de entrada e saída de veículos. Veja o código abaixo:
 ![Captura de tela de 2024-09-06 11-35-13](https://github.com/user-attachments/assets/2050e496-ee5e-468a-8e09-f9eebf08b5d0)
+# Criando Atalhos para Scripts Python
+
+## No Windows
+
+No Windows, você cria atalhos para executar scripts ou aplicativos através do sistema de arquivos. Aqui está um guia para criar atalhos para os seus scripts Python:
+
+### Criar o Atalho
+
+1. Navegue até o local onde você deseja criar o atalho (por exemplo, na área de trabalho).
+2. Clique com o botão direito do mouse em um espaço vazio e selecione **Novo** > **Atalho**.
+
+### Definir o Caminho do Atalho
+
+- **Para o Interface:**
+  Na caixa que aparece, digite o caminho fictício para o interpretador Python e o script Python. Exemplo:
+  ```plaintext
+  "C:\Program Files\Python\python.exe" "C:\MeusProgramas\MeuApp\interface.py"
+- **Para o Relatório:**
+  Na caixa que aparece, digite o caminho fictício para o interpretador Python e o script Python. Exemplo:
+  "C:\Program Files\Python\python.exe" "C:\MeusProgramas\MeuApp\app.py"
+## Nomear o Atalho:
+Após definir o caminho, clique em Avançar.
+Dê um nome ao atalho, como "Interface" ou "Relatório".
+Clique em Concluir.
+### No Ubuntu (Linux):
+No Ubuntu, você cria atalhos criando arquivos .desktop. Aqui está um guia para criar os arquivos .desktop com caminhos fictícios:
+
+## Criar o Arquivo .desktop
+Abra um editor de texto (como gedit, nano, ou vim).
+Cole o conteúdo abaixo para cada atalho, substituindo os caminhos fictícios.
+Para o Interface:
+
+- **Exemplo:Interface**
+[Desktop Entry]
+Name=Interface
+Comment=Executar o script Python para o aplicativo de câmera
+Exec=/usr/bin/python3 /home/usuario/MeusProgramas/MeuApp/interface.py
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Para o Relatório:
+
+- **Exemplo:Relatorio**
+[Desktop Entry]
+Name=Relatório
+Comment=Inicia o servidor para gerar relatórios
+Exec=/usr/bin/python3 /home/usuario/MeusProgramas/MeuApp/app.py
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=Development;
+
+## Salvar o Arquivo
+Salve o arquivo com a extensão .desktop, por exemplo, interface.desktop e relatorio.desktop.
+Coloque esses arquivos no diretório ~/Desktop se você quiser que eles apareçam na área de trabalho, ou em ~/.local/share/applications para que apareçam no menu de aplicativos.
+## Tornar o Arquivo Executável
+Abra o terminal.
+Navegue até o diretório onde você salvou os arquivos .desktop, por exemplo:
+cd ~/Desktop
+## Torne o arquivo executável com o comando:
+chmod +x interface.desktop
+chmod +x relatorio.desktop
+
+## Explicação dos Caminhos Fictícios
+## No Windows:
+
+"C:\Program Files\Python\python.exe" é um caminho fictício para o interpretador Python.
+"C:\MeusProgramas\MeuApp\interface.py" e "C:\MeusProgramas\MeuApp\app.py" são caminhos fictícios para os scripts Python.
+## No Ubuntu:
+
+/usr/bin/python3 é um caminho fictício para o interpretador Python.
+/home/usuario/MeusProgramas/MeuApp/interface.py e /home/usuario/MeusProgramas/MeuApp/app.py são caminhos fictícios para os scripts Python.
+-** Como fica a aplicaçao no Ubuntu:
+![Captura de tela de 2024-09-13 11-43-58](https://github.com/user-attachments/assets/11585f06-6516-40ee-bda4-3b5c76c2bf83)
+
+Esses caminhos fictícios devem ser substituídos pelos caminhos reais onde o Python e os scripts estão localizados no seu sistema. Se seguir essas instruções, você conseguirá criar atalhos funcionais tanto no Windows quanto no Ubuntu para os seus scripts Python.
+
+ 
