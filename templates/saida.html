@@ -70,8 +70,40 @@
             background-color: #2980b9;
         }
 
+        .pagination {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .pagination a {
+            display: inline-block;
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+
+        .pagination a.disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pagination a:hover:not(.disabled) {
+            background-color: #2980b9;
+        }
+
         .container {
             padding: 0 20px;
+        }
+
+        .img-thumbnail {
+            max-width: 100px; /* Ajuste o tamanho máximo da imagem conforme necessário */
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -88,17 +120,32 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Aqui você precisa inserir os dados de todas as saídas -->
                 {% for record in records %}
                     <tr>
                         <td>{{ record[0] }}</td>
                         <td>{{ record[1] }}</td>
                         <td>{{ record[2] }}</td>
-                        <td><a href="{{ url_for('image', record_id=record[0]) }}" target="_blank">Ver Imagem</a></td>
+                        <td><img src="{{ url_for('image', table='saida', record_id=record[0]) }}" class="img-thumbnail" alt="Imagem"></td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- Controle de Paginação -->
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('show_exits', page=page-1) }}">Anterior</a>
+            {% else %}
+                <a class="disabled">Anterior</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('show_exits', page=page+1) }}">Próxima</a>
+            {% else %}
+                <a class="disabled">Próxima</a>
+            {% endif %}
+        </div>
+
         <a href="/" class="button">Voltar</a>
     </div>
 </body>
