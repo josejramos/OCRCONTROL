@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Entrada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        h2 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            color: #3498db;
+        }
+        form {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="date"], input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #2980b9;
+        }
+        .error {
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: #fff;
+        }
+        tbody tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+        tbody tr:hover {
+            background-color: #eaf2f8;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 0 5px;
+            background-color: #3498db;
+            color: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .pagination a:hover {
+            background-color: #2980b9;
+        }
+        .pagination .disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Histórico de Entrada</h1>
+
+    <!-- Formulário de filtro e busca -->
+    <form method="POST" action="{{ url_for('show_historico_entrada') }}">
+        <h2>Filtrar e Buscar Registros</h2>
+        <label for="placa">Placa:</label>
+        <input type="text" name="placa" id="placa" placeholder="Digite a placa" value="{{ request.form.get('placa', '') }}">
+        
+        <label for="start_date">Data Inicial:</label>
+        <input type="date" name="start_date" id="start_date" value="{{ request.form.get('start_date', '') }}">
+        
+        <label for="end_date">Data Final:</label>
+        <input type="date" name="end_date" id="end_date" value="{{ request.form.get('end_date', '') }}">
+        
+        <input type="submit" value="Filtrar e Buscar">
+    </form>
+
+    <!-- Botões para mostrar todas as entradas, saídas e histórico de entrada -->
+    <div>
+        <a href="{{ url_for('show_entries') }}" class="button">Mostrar Todas as Entradas</a>
+        <a href="{{ url_for('show_exits') }}" class="button">Mostrar Todas as Saídas</a>
+        <a href="{{ url_for('show_historico_entrada') }}" class="button">Mostrar Histórico de Entrada</a>
+    </div>
+
+    <!-- Tabela de registros -->
+    {% if records %}
+        <h2>Registros de Entrada</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Data</th>
+                    <th>Hora</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                    <tr>
+                        <td>{{ record[0] }}</td>
+                        <td>{{ record[1] }}</td>
+                        <td>{{ record[2] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Navegação de página -->
+        <div class="pagination">
+            {% if page > 1 %}
+                <a href="{{ url_for('show_historico_entrada', page=page-1, placa=request.form.get('placa', ''), start_date=request.form.get('start_date', ''), end_date=request.form.get('end_date', '')) }}">Anterior</a>
+            {% else %}
+                <span class="disabled">Anterior</span>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('show_historico_entrada', page=page+1, placa=request.form.get('placa', ''), start_date=request.form.get('start_date', ''), end_date=request.form.get('end_date', '')) }}">Próximo</a>
+            {% else %}
+                <span class="disabled">Próximo</span>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>Não há registros para mostrar.</p>
+    {% endif %}
+</body>
+</html>
