@@ -69,6 +69,13 @@
         .button:hover {
             background-color: #2980b9;
         }
+
+        .img-thumbnail {
+            max-width: 100px; /* Ajuste o tamanho máximo da imagem conforme necessário */
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -83,13 +90,12 @@
             </tr>
         </thead>
         <tbody>
-            <!-- Aqui você precisa inserir os dados de todas as entradas -->
             {% for record in records %}
                 <tr>
                     <td>{{ record[0] }}</td>
                     <td>{{ record[1] }}</td>
                     <td>{{ record[2] }}</td>
-                    <td><a href="{{ url_for('image', record_id=record[0]) }}" target="_blank">Ver Imagem</a></td>
+                    <td><img src="{{ url_for('image', table='entrada', record_id=record[0]) }}" class="img-thumbnail" alt="Imagem"></td>
                 </tr>
             {% endfor %}
         </tbody>
