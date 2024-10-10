@@ -14,15 +14,14 @@ import psycopg2
 reader = easyocr.Reader(['en'])
 
 # Carrega o modelo YOLOv8 pré-treinado
-model = YOLO('/home/jose/ocrb/modelo/best.pt')
+model = YOLO('modelo/best.pt')
 
 # Lista de classes para YOLO
-with open("/home/jose/ocrb/coco1.txt", "r") as my_file:
+with open("coco1.txt", "r") as my_file:
     class_list = my_file.read().split("\n")
 
 # Área de análise original
 original_width, original_height = 1020, 510
-analysis_ratio = 0.30
 
 # Conectar ao banco de dados PostgreSQL
 conn = psycopg2.connect(
@@ -115,7 +114,7 @@ def update_plate_registration(placa):
     conn.commit()
 
 def resize_analysis_area(original_width, original_height, target_width, target_height):
-    x_min_area, y_min_area, x_max_area, y_max_area = 30, 390, 1015, 451
+    x_min_area, y_min_area, x_max_area, y_max_area = 30, 310, 1015, 451
     width_scale = target_width / original_width
     height_scale = target_height / original_height
     x_min_area = int(x_min_area * width_scale)
@@ -164,6 +163,8 @@ class CameraApp:
         px = pd.DataFrame(a).astype("float")
 
         current_time = datetime.now()
+        detected_plates = set()  # Manter controle das placas detectadas neste frame
+        
         for index, row in px.iterrows():
             x1, y1, x2, y2, _, d = map(int, row)
             c = class_list[d]
@@ -177,13 +178,16 @@ class CameraApp:
                 text = reader.readtext(crop, detail=0, paragraph=False)
                 if text:
                     text = text[0].replace('(', '').replace(')', '').replace(',', '').replace(']', '')
-                    if text:
+                    if text and text not in detected_plates:
+                        detected_plates.add(text)
+                        
                         cursor.execute("SELECT ultimo_registro FROM registro_placas WHERE placa = %s", (text,))
                         result = cursor.fetchone()
                         if result:
                             ultimo_registro = result[0]
                             if (current_time - ultimo_registro).total_seconds() < 5:
                                 continue
+                        
                         update_plate_registration(text)
                         cursor.execute("SELECT * FROM entrada WHERE placa = %s", (text,))
                         entry_exists = cursor.fetchone()
@@ -198,6 +202,7 @@ class CameraApp:
                                 insert_entrada(text, current_time.date(), current_time.time(), img_bytes)
                             else:
                                 insert_entrada(text, current_time.date(), current_time.time(), img_bytes)
+                        
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
                         cv2.imshow('crop', crop)
         
