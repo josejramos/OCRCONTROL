@@ -128,10 +128,18 @@ def add_record(table, placa, data, hora):
     conn = connect_db()
     cursor = conn.cursor()
     try:
+        # Inserir na tabela especificada
         query = sql.SQL("INSERT INTO {} (placa, data, hora) VALUES (%s, %s, %s)").format(sql.Identifier(table))
         cursor.execute(query, (placa, data, hora))
-        query = sql.SQL("INSERT INTO registro_placas (placa) VALUES (%s)")
+        
+        # Inserir na tabela registro_placas
+        query = sql.SQL("INSERT INTO registro_placas (placa) VALUES (%s) ON CONFLICT (placa) DO NOTHING")
         cursor.execute(query, (placa,))
+        
+        # Inserir na tabela historico_entrada
+        query = sql.SQL("INSERT INTO historico_entrada (placa, data, hora) VALUES (%s, %s, %s)")
+        cursor.execute(query, (placa, data, hora))
+        
         conn.commit()
         return True
     except Exception as e:
@@ -140,6 +148,7 @@ def add_record(table, placa, data, hora):
         return False
     finally:
         conn.close()
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
